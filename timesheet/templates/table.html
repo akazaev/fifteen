@@ -1,0 +1,13 @@
+<table>
+{% for interval in intervals %}
+    <tr>
+        <td>{{ interval }}</td>
+        <td><select>
+            <option value="">---</option>
+            {% for activity in activities %}
+                <option value="{{ activity.id }}">{{ activity.activity }}</option>
+            {% endfor %}
+        </select></td>
+    </tr>
+{% endfor %}
+</table>
