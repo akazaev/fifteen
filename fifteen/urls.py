@@ -16,11 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from timesheet.views import create
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('timesheet/', include('timesheet.urls')),
-    path('', create, name='create')
 ]

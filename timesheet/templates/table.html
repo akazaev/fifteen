@@ -1,11 +1,20 @@
+<script src="/static/jquery.min.js"></script>
+<script>
+    var csrf_token = '{{ csrf_token }}';
+    var colors = Object();
+    {% for activity in activities %}
+        colors[{{ activity.id }}] = "{{ activity.color }}";
+    {% endfor %}
+</script>
+<script src="/static/create.js"></script>
 <table>
 {% for interval in intervals %}
     <tr>
-        <td>{{ interval }}</td>
-        <td><select>
+        <td>{{ interval.1 }}</td>
+        <td><select class="activity" time="{{ interval.0 }}">
             <option value="">---</option>
             {% for activity in activities %}
-                <option value="{{ activity.id }}">{{ activity.activity }}</option>
+                <option value="{{ activity.id }}" {% if interval.2 == activity.id %} selected {% endif %}>{{ activity.activity }}</option>
             {% endfor %}
         </select></td>
     </tr>
