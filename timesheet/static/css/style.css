@@ -1,0 +1,10 @@
+.table {
+    display: flex;
+}
+
+.cell {
+    min-height: 20px;
+    border-style: solid;
+    border-width: 1px;
+    padding: 1px;
+}

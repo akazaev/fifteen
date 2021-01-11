@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="table">
+        <div class="column">
+            <div class="cell"></div>
+        {% for interval in intervals %}
+            <div class="cell">
+                {{ interval }}
+            </div>
+        {% endfor %}
+    </div>
+{% for date, day_records in records.items %}
+    <div class="column">
+        <div class="cell">{{ date }}</div>
+        {% for interval, activity in day_records.items %}
+            <div class="cell">
+                {% if activity %} {{ activity }} {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endfor %}
+</div>
+{% endblock %}

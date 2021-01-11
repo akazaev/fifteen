@@ -1,5 +1,7 @@
+{% extends "base.html" %}
 {% load tags %}
-<script src="/static/jquery.min.js"></script>
+
+{% block content %}
 <script>
     var csrf_token = '{{ csrf_token }}';
     var colors = Object();
@@ -14,16 +16,18 @@
 <div>
 <table>
 {% for interval in intervals %}
-    <tr">
-        <td>{{ interval.1 }}</td>
-        <td><select class="activity" time="{{ interval.0 }}">
+    <tr>
+        <td class="interval_block">{{ interval.1 }}</td>
+        <td class="activity_block"><select class="activity" time="{{ interval.0 }}">
             <option value="">---</option>
             {% for activity in activities_choices %}
                 <option value="{{ activity.0 }}" {% if interval.2 == activity.0 %} selected {% endif %}>{{ activity.1 }}</option>
             {% endfor %}
         </select></td>
+        <td class="status_block"><span class="status"></span></td>
     </tr>
 {% endfor %}
 </table>
 </div>
 <a href="{{ request.path }}">Compact view</a>
+{% endblock %}

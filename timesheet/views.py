@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render
 
 from timesheet.forms import CreateForm
@@ -97,6 +97,24 @@ def create(request):
             record.save()
             return JsonResponse({'status': 'ok'})
         return JsonResponse({'status': 'error'})
+    return HttpResponseForbidden()
 
-    form = CreateForm()
-    return render(request, 'create.html', {'form': form})
+
+def full(request):
+    intervals = [f'{h:02}:{m:02}' for h in range(24) for m in (0, 15, 30, 45)]
+    empty_day = {}
+    for interval in intervals:
+        empty_day[interval] = None
+
+    records = {}
+    for record in Record.objects.order_by('date', 'time'):
+        date = str(record.date)
+        if date not in records:
+            records[date] = empty_day.copy()
+        records[date][record.time.strftime('%H:%M')] = record.activity.activity
+
+    context = {
+        'intervals': intervals,
+        'records': dict(records),
+    }
+    return render(request, 'full.html', context=context)
