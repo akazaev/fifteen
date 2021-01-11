@@ -12,7 +12,6 @@ $(document).ready(function () {
                 'activity': obj.val()
             },
             success: function () {
-                console.log(colors[obj.val()]);
                 obj.css("background-color", colors[obj.val()]);
                 obj.closest('tr').css("background-color", colors[obj.val()]);
             }

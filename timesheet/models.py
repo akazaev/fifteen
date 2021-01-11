@@ -12,7 +12,7 @@ class TimesheetConfig(AppConfig):
 
 class Activity(models.Model):
     activity = models.CharField(max_length=30)
-    color = ColorField(default='#FFFFFF')
+    color = ColorField(default='#ccc')
 
     def __str__(self):
         return self.activity

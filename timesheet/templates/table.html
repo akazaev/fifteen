@@ -3,10 +3,13 @@
     var csrf_token = '{{ csrf_token }}';
     var colors = Object();
     {% for activity in activities %}
-        colors[{{ activity.id }}] = "{{ activity.color }}";
+        colors[{{ activity.0 }}] = "{{ activity.color }}";
     {% endfor %}
 </script>
 <script src="/static/create.js"></script>
+<a href="{{ request.path }}">Compact view</a>
+<a href="{{ request.path }}?prev={{ prev }}">Previous</a>
+<div>
 <table>
 {% for interval in intervals %}
     <tr>
@@ -14,9 +17,11 @@
         <td><select class="activity" time="{{ interval.0 }}">
             <option value="">---</option>
             {% for activity in activities %}
-                <option value="{{ activity.id }}" {% if interval.2 == activity.id %} selected {% endif %}>{{ activity.activity }}</option>
+                <option value="{{ activity.0 }}" {% if interval.2 == activity.0 %} selected {% endif %}>{{ activity.1 }}</option>
             {% endfor %}
         </select></td>
     </tr>
 {% endfor %}
 </table>
+</div>
+<a href="{{ request.path }}">Compact view</a>
