@@ -8,13 +8,51 @@ from timesheet.forms import CreateForm
 from timesheet.models import Activity, Record
 
 
+COLORS_MAP = {
+    10: '#5eb91e',
+    9: '#5eb91e',
+    8: '#bbe33d',
+    7: '#bbe33d',
+    6: '#d4ea6b',
+    5: '#d4ea6b',
+    4: '#e8f2a1',
+    3: '#e8f2a1',
+    2: '#f6f9d4',
+    1: '#f6f9d4',
+    0: '#ffffff',
+    -1: '#ffd7d7',
+    -2: '#ffd7d7',
+    -3: '#ffa6a6',
+    -4: '#ffa6a6',
+    -5: '#ff6d6d',
+    -6: '#ff6d6d',
+    -7: '#ff3838',
+    -8: '#ff3838',
+    -9: '#f10d0c',
+    -10: '#f10d0c',
+}
+
+
+def _get_activity_color(rating):
+    if rating in COLORS_MAP:
+        return COLORS_MAP[rating]
+    elif rating > 10:
+        return COLORS_MAP[10]
+    elif rating < -10:
+        return COLORS_MAP[-10]
+
+
 def index(request):
     current = datetime.now()
     prev = int(request.GET.get('prev', 2))
     min_hour = max(0, current.hour - prev)
     max_hour = min(24, current.hour + 2)
-    activities = {(activity.id, activity.activity): 0
-                  for activity in Activity.objects.all()}
+    activities = {}
+    activities_colors = {}
+    for activity in Activity.objects.all():
+        activities[(activity.id, activity.activity)] = 0
+        activities_colors[activity.id] = _get_activity_color(activity.rating)
+
     filter_date = datetime.now().replace(hour=0, minute=0, second=0)
     for record in Record.objects.all():
         activities[(record.activity.id, record.activity.activity)] += 1
@@ -32,7 +70,8 @@ def index(request):
             intervals.append((full, short, activity))
     context = {
         'intervals': intervals,
-        'activities': activities_choices,
+        'activities_choices': activities_choices,
+        'activities_colors': activities_colors,
         'prev': prev + 2
     }
     return render(request, 'table.html', context=context)

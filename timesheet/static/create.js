@@ -1,4 +1,12 @@
 $(document).ready(function () {
+    $('.activity').each(function(){
+        obj = $(this);
+        color = colors[obj.val()];
+        if (color) {
+            obj.css("background-color", color);
+            obj.closest('tr').css("background-color", color);
+        }
+    });
     $('.activity').on('change', function(event){
         obj = $(this);
         $.ajax({
