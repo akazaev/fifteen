@@ -14,9 +14,15 @@
     <div class="column">
         <div class="cell">{{ date }}</div>
         {% for interval, activity in day_records.items %}
-            <div class="cell">
-                {% if activity %} {{ activity }} {% endif %}
-            </div>
+            {% if activity %}
+                <div
+                     {% if activity.color %} class="cell" style="background-color: {{ activity.color }}"
+                     {% else %} class="cell rating{{ activity.rating }}" {% endif %}>
+                    {{ activity.activity }}
+                </div>
+            {% else %}
+                <div class="cell"></div>
+            {% endif %}
         {% endfor %}
     </div>
 {% endfor %}

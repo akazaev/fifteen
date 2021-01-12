@@ -25,4 +25,4 @@ class Record(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
 
     def __str__(self):
-        return '{} {}'.format(self.activity, self.time)
+        return '{} {} {}'.format(self.activity, self.time, self.date)

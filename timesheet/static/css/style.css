@@ -1,10 +1,36 @@
 .table {
     display: flex;
+    font-size: 14px;
 }
 
 .cell {
-    min-height: 20px;
+    text-align: center;
+    min-height: 18px;
+    min-width: 75px;
     border-style: solid;
     border-width: 1px;
+    border-color: #eee;
     padding: 1px;
 }
+
+.rating10 {background-color: #5eb91e}
+.rating9 {background-color: #5eb91e}
+.rating8 {background-color: #bbe33d}
+.rating7 {background-color: #bbe33d}
+.rating6 {background-color: #d4ea6b}
+.rating5 {background-color: #d4ea6b}
+.rating4 {background-color: #e8f2a1}
+.rating3 {background-color: #e8f2a1}
+.rating2 {background-color: #f6f9d4}
+.rating1 {background-color: #f6f9d4}
+.rating0 {background-color: #ffffff}
+.rating-1 {background-color: #ffd7d7}
+.rating-2 {background-color: #ffd7d7}
+.rating-3 {background-color: #ffa6a6}
+.rating-4 {background-color: #ffa6a6}
+.rating-5 {background-color: #ff6d6d}
+.rating-6 {background-color: #ff6d6d}
+.rating-7 {background-color: #ff3838}
+.rating-8 {background-color: #ff3838}
+.rating-9 {background-color: #f10d0c}
+.rating-10 {background-color: #f10d0c}
