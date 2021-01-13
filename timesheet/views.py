@@ -1,3 +1,4 @@
+from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
@@ -6,40 +7,6 @@ from django.shortcuts import render
 from timesheet.forms import CreateForm
 from django.db.models import Count
 from timesheet.models import Activity, Record
-
-
-COLORS_MAP = {
-    10: '#5eb91e',
-    9: '#5eb91e',
-    8: '#bbe33d',
-    7: '#bbe33d',
-    6: '#d4ea6b',
-    5: '#d4ea6b',
-    4: '#e8f2a1',
-    3: '#e8f2a1',
-    2: '#f6f9d4',
-    1: '#f6f9d4',
-    0: '#ffffff',
-    -1: '#ffd7d7',
-    -2: '#ffd7d7',
-    -3: '#ffa6a6',
-    -4: '#ffa6a6',
-    -5: '#ff6d6d',
-    -6: '#ff6d6d',
-    -7: '#ff3838',
-    -8: '#ff3838',
-    -9: '#f10d0c',
-    -10: '#f10d0c',
-}
-
-
-def _get_activity_color(rating):
-    if rating in COLORS_MAP:
-        return COLORS_MAP[rating]
-    elif rating > 10:
-        return COLORS_MAP[10]
-    elif rating < -10:
-        return COLORS_MAP[-10]
 
 
 def index(request):
@@ -69,8 +36,12 @@ def index(request):
     context = {
         'intervals': intervals,
         'activities_choices': activities_choices,
-        'activities_colors': {activity_id: _get_activity_color(activity.rating)
-                              for activity_id, activity in activities.items()},
+        'activities_colors': {activity_id: activity.color
+                              for activity_id, activity in activities.items()
+                              if activity.color},
+        'activities_ratings': {activity_id: activity.rating
+                               for activity_id, activity in activities.items()
+                               if activity.rating},
         'prev': prev + 2
     }
     return render(request, 'table.html', context=context)
@@ -99,6 +70,9 @@ def create(request):
     return HttpResponseForbidden()
 
 
+Cell = namedtuple('Cell', ['time', 'color', 'rating', 'activity'])
+
+
 def _report(days=None):
     intervals = [f'{h:02}:{m:02}' for h in range(7, 24)
                  for m in (0, 15, 30, 45)]
@@ -106,20 +80,36 @@ def _report(days=None):
     for interval in intervals:
         empty_day[interval] = None
 
+    activities = {}
+    for activity in Activity.objects.all():
+        activities[activity.id] = activity
+
     if days:
         filter_date = datetime.now().replace(hour=0, minute=0, second=0)
         filter_date -= timedelta(days=days + 1)
         records = Record.objects.filter(
-            date__gte=filter_date).order_by('date', 'time')
+            date__gte=filter_date).order_by('date', 'time').values(
+            'date', 'time', 'activity_id')
     else:
-        records = Record.objects.order_by('date', 'time')
+        records = Record.objects.order_by('date', 'time').values(
+            'date', 'time', 'activity_id')
 
-    report = {}
+    report = defaultdict(list)
     for record in records:
-        date = str(record.date)
-        if date not in report:
-            report[date] = empty_day.copy()
-        report[date][record.time.strftime('%H:%M')] = record.activity
+        date = record['date']
+        time = record['time'].strftime('%H:%M')
+        if not report[date]:
+            report[date].extend([''] * intervals.index(time))
+        activity_id = record['activity_id']
+        cell = Cell(time=time, color=activities[activity_id].color,
+                    rating=activities[activity_id].rating,
+                    activity=activities[activity_id].activity)
+        report[date].append(cell)
+    for day in report:
+        day_records = report[day]
+        tail = len(intervals) - intervals.index(day_records[-1].time) - 1
+        if tail:
+            day_records.extend([''] * tail)
     return intervals, report
 
 

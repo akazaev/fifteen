@@ -8,9 +8,12 @@
     {% for activity_id, color in activities_colors.items %}
         colors[{{ activity_id }}] = "{{ color }}";
     {% endfor %}
+    var ratings = Object();
+    {% for activity_id, rating in activities_ratings.items %}
+        ratings[{{ activity_id }}] = "{{ rating }}";
+    {% endfor %}
 </script>
 <script src="/static/js/create.js"></script>
-<a href="/">Home</a>
 <a href="{{ request.path }}">Compact view</a>
 <a href="{{ request.path }}?prev={{ prev }}">Previous</a>
 <div>
