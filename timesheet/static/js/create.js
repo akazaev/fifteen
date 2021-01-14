@@ -1,14 +1,14 @@
 function updateColors() {
     $('.activity').each(function(){
         obj = $(this);
-        color = colors[obj.val()];
+        color = COLORS[obj.val()];
         if (color) {
             obj.css("background-color", color);
             tr = obj.closest('tr')
             tr.find('.interval_block').css("background-color", color);
             tr.find('.activity_block').css("background-color", color);
         } else {
-            rating = ratings[obj.val()];
+            rating = RATINGS[obj.val()];
             obj.addClass("rating" + rating);
             tr = obj.closest('tr')
             tr.find('.interval_block').addClass("rating" + rating);
@@ -19,7 +19,7 @@ function updateColors() {
 
 $(document).ready(function () {
     updateColors();
-    
+
     $('.activity').on('change', function(event){
         obj = $(this);
         $.ajax({
@@ -29,6 +29,7 @@ $(document).ready(function () {
             },
             url: "/timesheet/create/",
             data: {
+                'date': CUR_DATE,
                 'time': obj.attr('time'),
                 'activity': obj.val()
             },

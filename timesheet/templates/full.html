@@ -13,7 +13,7 @@
 {% for date, day_records in records.items %}
     <div class="column">
         <div class="date-cell">{{ date }}</div>
-        {% for record in day_records %}
+        {% for time, record in day_records.items %}
             {% if record %}
                 <div
                      {% if record.color %} class="cell" style="background-color: {{ record.color }}"

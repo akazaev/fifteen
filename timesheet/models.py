@@ -20,7 +20,7 @@ class Activity(models.Model):
 
 
 class Record(models.Model):
-    date = models.DateField(default=datetime.datetime.now())
+    date = models.DateField()
     time = models.TimeField()
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
 

@@ -12,18 +12,29 @@ from timesheet.models import Activity, Record
 def index(request):
     current = datetime.now()
     prev = int(request.GET.get('prev', 2))
-    min_hour = max(0, current.hour - prev)
-    max_hour = min(24, current.hour + 2)
+    filter_date = request.GET.get('date')
+
+    min_hour = 0
+    max_hour = 24
+    if not filter_date:
+        min_hour = max(0, current.hour - prev)
+        max_hour = min(24, current.hour + 2)
+
     activities = {activity.id: activity for activity in Activity.objects.all()}
 
-    filter_date = datetime.now().replace(hour=0, minute=0, second=0)
+    if not filter_date:
+        cur_date = datetime.now()
+        filter_date = cur_date.strftime('%Y-%m-%d')
+    else:
+        cur_date = datetime.strptime(filter_date, '%Y-%m-%d')
+
     activity_stat = Record.objects.all().values('activity').annotate(
         count=Count('activity_id')).order_by('-count')
 
     activities_choices = [(activity['activity'],
                            activities[activity['activity']])
                           for activity in activity_stat]
-    day_records = Record.objects.filter(date__gte=filter_date)
+    day_records = Record.objects.filter(date=filter_date)
     day_records = {str(record.time): record.activity.id
                    for record in day_records}
     intervals = []
@@ -41,8 +52,10 @@ def index(request):
                               if activity.color},
         'activities_ratings': {activity_id: activity.rating
                                for activity_id, activity in activities.items()
-                               if activity.rating},
-        'prev': prev + 2
+                               if activity.rating is not None},
+        'prev': prev + 2,
+        'cur_date': cur_date.strftime('%Y-%m-%d'),
+        'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d')
     }
     return render(request, 'table.html', context=context)
 
@@ -51,26 +64,28 @@ def create(request):
     if request.method == 'POST':
         form = CreateForm(request.POST)
         if form.is_valid():
+            date = form.data['date']
             time = form.data['time']
             activity = form.data['activity']
             activity = Activity.objects.get(pk=activity)
-            date = datetime.now().date()
+            if not date:
+                date = datetime.now().date()
             records = Record.objects.all().filter(date=date, time=time)
             if len(records) == 1:
                 record = records[0]
                 record.activity = activity
             elif len(records) > 1:
                 records.delete()
-                record = Record(time=time, activity=activity)
+                record = Record(time=time, activity=activity, date=date)
             else:
-                record = Record(time=time, activity=activity)
+                record = Record(time=time, activity=activity, date=date)
             record.save()
             return JsonResponse({'status': 'ok'})
         return JsonResponse({'status': 'error'})
     return HttpResponseForbidden()
 
 
-Cell = namedtuple('Cell', ['time', 'color', 'rating', 'activity'])
+Cell = namedtuple('Cell', ['color', 'rating', 'activity'])
 
 
 def _report(days=None):
@@ -94,22 +109,18 @@ def _report(days=None):
         records = Record.objects.order_by('date', 'time').values(
             'date', 'time', 'activity_id')
 
-    report = defaultdict(list)
+    report = {}
     for record in records:
         date = record['date']
         time = record['time'].strftime('%H:%M')
-        if not report[date]:
-            report[date].extend([''] * intervals.index(time))
+
+        if date not in report:
+            report[date] = empty_day.copy()
+
         activity_id = record['activity_id']
-        cell = Cell(time=time, color=activities[activity_id].color,
-                    rating=activities[activity_id].rating,
-                    activity=activities[activity_id].activity)
-        report[date].append(cell)
-    for day in report:
-        day_records = report[day]
-        tail = len(intervals) - intervals.index(day_records[-1].time) - 1
-        if tail:
-            day_records.extend([''] * tail)
+        report[date][time] = Cell(color=activities[activity_id].color,
+                                  rating=activities[activity_id].rating,
+                                  activity=activities[activity_id].activity)
     return intervals, report
 
 
@@ -117,7 +128,7 @@ def full(request):
     intervals, records = _report()
     context = {
         'intervals': intervals,
-        'records': dict(records),
+        'records': records,
     }
     return render(request, 'full.html', context=context)
 
@@ -126,7 +137,7 @@ def week(request):
     intervals, records = _report(7)
     context = {
         'intervals': intervals,
-        'records': dict(records),
+        'records': records,
     }
     return render(request, 'full.html', context=context)
 
@@ -135,7 +146,7 @@ def month(request):
     intervals, records = _report(30)
     context = {
         'intervals': intervals,
-        'records': dict(records),
+        'records': records,
     }
     return render(request, 'full.html', context=context)
 
