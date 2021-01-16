@@ -18,7 +18,7 @@
                 <div
                      {% if record.color %} class="cell" style="background-color: {{ record.color }}"
                      {% else %} class="cell rating{{ record.rating }}" {% endif %}>
-                    <span class="cell-text">{{ record.activity }}</span>
+                    <div class="cell-text">{{ record.activity }}</div>
                 </div>
             {% else %}
                 <div class="cell"></div>

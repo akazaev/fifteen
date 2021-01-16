@@ -28,6 +28,7 @@
 }
 
 .cell {
+    display: flex;
     opacity: 0.8;
     text-align: center;
     min-height: 18px;
@@ -38,8 +39,51 @@
     padding: 1px;
 }
 
+.row {
+    display: flex;
+    opacity: 0.8;
+    text-align: center;
+    min-height: 18px;
+    min-width: 75px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #eee;
+    padding: 1px;
+}
+
+.interval_block {
+    padding: 3px;
+}
+
+.activity_block {
+    padding: 3px;
+}
+
 .cell-text {
+    width: 100%;
+    text-align: center;
     font-family: sans-serif;
+}
+
+.tracker-cell {
+    border-style: none;
+}
+
+.stats-cell {
+    border-style: none;
+    min-width: 150px;
+}
+
+.stats-row {
+    border-style: none;
+}
+
+.stats-text {
+    font-size: 24px;
+}
+
+.status {
+    width: 75px;
 }
 
 .rating10 {background-color: #5eb91e}
@@ -52,7 +96,7 @@
 .rating3 {background-color: #e8f2a1}
 .rating2 {background-color: #f6f9d4}
 .rating1 {background-color: #f6f9d4}
-.rating0 {background-color: #ffffff}
+.rating0 {background-color: #f6f9d4}
 .rating-1 {background-color: #ffd7d7}
 .rating-2 {background-color: #ffd7d7}
 .rating-3 {background-color: #ffa6a6}

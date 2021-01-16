@@ -2,15 +2,25 @@ function updateColors() {
     $('.activity').each(function(){
         obj = $(this);
         color = COLORS[obj.val()];
+
         if (color) {
             obj.css("background-color", color);
             tr = obj.closest('tr')
             tr.find('.interval_block').css("background-color", color);
             tr.find('.activity_block').css("background-color", color);
         } else {
+            obj.removeClass (function (index, className) {
+                return (className.match (/(^|\s)rating\S+/g) || []).join(' ');
+            });
             rating = RATINGS[obj.val()];
             obj.addClass("rating" + rating);
             tr = obj.closest('tr')
+            tr.find('.interval_block').removeClass (function (index, className) {
+                return (className.match (/(^|\s)rating\S+/g) || []).join(' ');
+            });
+            tr.find('.activity_block').removeClass (function (index, className) {
+                return (className.match (/(^|\s)rating\S+/g) || []).join(' ');
+            });
             tr.find('.interval_block').addClass("rating" + rating);
             tr.find('.activity_block').addClass("rating" + rating);
         }
@@ -34,14 +44,14 @@ $(document).ready(function () {
                 'activity': obj.val()
             },
             error: function () {
-                obj.closest('tr').find('.status').text("⛔");
+                obj.closest('div').find('.status').text("⛔");
             },
             success: function (response) {
                 if (response.status == 'ok') {
-                    obj.closest('tr').find('.status').text("✔");
+                    obj.closest('div').find('.status').text("✔");
                 };
                 if (response.status == 'error') {
-                    obj.closest('tr').find('.status').text("⛔");
+                    obj.closest('div').find('.status').text("⛔");
                 };
                 updateColors();
             }

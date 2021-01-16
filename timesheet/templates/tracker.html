@@ -18,21 +18,33 @@
 <a href="{{ request.path }}">Reset view</a>
 <a href="{{ request.path }}?prev={{ prev }}">Previous</a>
 <a href="{{ request.path }}?date={{ prev_date }}">Previous day {{ prev_date }}</a>
-<div>
-<table>
+<div class="table">
+<!-- Tracker block -->
+<div class="column">
 {% for interval in intervals %}
-    <tr>
-        <td class="interval_block">{{ interval.1 }}</td>
-        <td class="activity_block"><select class="activity" time="{{ interval.0 }}">
+    <div class="cell tracker-cell">
+        <div class="interval_block">{{ interval.1 }}</div>
+        <div class="activity_block">
+            <select class="activity" time="{{ interval.0 }}">
             <option value="">---</option>
             {% for activity in activities_choices %}
                 <option value="{{ activity.0 }}" {% if interval.2 == activity.0 %} selected {% endif %}>{{ activity.1 }}</option>
             {% endfor %}
-        </select></td>
-        <td class="status_block"><span class="status"></span></td>
-    </tr>
+            </select>
+            <span class="status">&nbsp;&nbsp;&nbsp;</span>
+        </div>
+    </div>
 {% endfor %}
-</table>
+</div>
+<!-- Stats block -->
+<div class="column">
+    {% for activity in day_stats %}
+    <div class="row stats-row">
+        <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
+        <div class="cell stats-cell stats-text">{{ activity.2 }}</div>
+    </div>
+    {% endfor %}
+</div>
 </div>
 <a href="{{ request.path }}">Reset view</a>
 {% endblock %}

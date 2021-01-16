@@ -9,6 +9,17 @@ from django.db.models import Count
 from timesheet.models import Activity, Record
 
 
+def _get_time_display(time):
+    hours = time // 60
+    minutes = time % 60
+    result = []
+    if hours:
+        result.append(f'{hours} h')
+    if minutes:
+        result.append(f'{minutes} m')
+    return ' '.join(result)
+
+
 def index(request):
     current = datetime.now()
     prev = int(request.GET.get('prev', 2))
@@ -18,7 +29,7 @@ def index(request):
     max_hour = 24
     if not filter_date:
         min_hour = max(0, current.hour - prev)
-        max_hour = min(24, current.hour + 2)
+        max_hour = min(24, current.hour + 3)
 
     activities = {activity.id: activity for activity in Activity.objects.all()}
 
@@ -34,9 +45,18 @@ def index(request):
     activities_choices = [(activity['activity'],
                            activities[activity['activity']])
                           for activity in activity_stat]
-    day_records = Record.objects.filter(date=filter_date)
-    day_records = {str(record.time): record.activity.id
-                   for record in day_records}
+    records = Record.objects.filter(date=filter_date)
+    day_stats = defaultdict(int)
+    day_records = {}
+    for record in records:
+        stime = str(record.time)
+        day_records[stime] = record.activity.id
+        day_stats[record.activity.activity] += 1
+
+    day_stats = [(activity, count, _get_time_display(count * 15))
+                 for activity, count in day_stats.items()]
+    day_stats.sort(key=lambda x: x[1], reverse=True)
+
     intervals = []
     for h in range(min_hour, max_hour):
         for m in (0, 15, 30, 45):
@@ -55,18 +75,24 @@ def index(request):
                                if activity.rating is not None},
         'prev': prev + 2,
         'cur_date': cur_date.strftime('%Y-%m-%d'),
-        'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d')
+        'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d'),
+        'day_stats': day_stats
     }
-    return render(request, 'table.html', context=context)
+    return render(request, 'tracker.html', context=context)
 
 
 def create(request):
     if request.method == 'POST':
         form = CreateForm(request.POST)
+        date = form.data['date']
+        time = form.data['time']
+        activity = form.data['activity']
+        if not activity and date and time:
+            records = Record.objects.all().filter(date=date, time=time)
+            records.delete()
+            return JsonResponse({'status': 'ok'})
+
         if form.is_valid():
-            date = form.data['date']
-            time = form.data['time']
-            activity = form.data['activity']
             activity = Activity.objects.get(pk=activity)
             if not date:
                 date = datetime.now().date()
@@ -173,6 +199,8 @@ def parse(request):
     for i in range(1, len(data[0])):
         day = []
         date = data[0][i].strip().split('.')
+        if len(date) != 3:
+            continue
         date = f"{date[2]}-{date[1]}-{date[0]}"
         for line in data[1:]:
             day.append(line[i].strip())
