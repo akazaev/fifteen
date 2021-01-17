@@ -1,8 +1,11 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, OrderedDict
 from datetime import datetime, timedelta
 
+from chartjs.views.lines import BaseLineChartView
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.shortcuts import render
+from django.views.generic import TemplateView
+import holidays
 
 from timesheet.forms import CreateForm
 from django.db.models import Count
@@ -127,7 +130,7 @@ def _report(days=None):
 
     if days:
         filter_date = datetime.now().replace(hour=0, minute=0, second=0)
-        filter_date -= timedelta(days=days + 1)
+        filter_date -= timedelta(days=days - 1)
         records = Record.objects.filter(
             date__gte=filter_date).order_by('date', 'time').values(
             'date', 'time', 'activity_id')
@@ -135,18 +138,21 @@ def _report(days=None):
         records = Record.objects.order_by('date', 'time').values(
             'date', 'time', 'activity_id')
 
+    ru_holidays = holidays.RU()
+
     report = {}
     for record in records:
         date = record['date']
         time = record['time'].strftime('%H:%M')
+        dayoff = date in ru_holidays or date.weekday() in (5, 6, )
 
         if date not in report:
-            report[date] = empty_day.copy()
+            report[date] = empty_day.copy(), dayoff
 
         activity_id = record['activity_id']
-        report[date][time] = Cell(color=activities[activity_id].color,
-                                  rating=activities[activity_id].rating,
-                                  activity=activities[activity_id].activity)
+        report[date][0][time] = Cell(color=activities[activity_id].color,
+                                     rating=activities[activity_id].rating,
+                                     activity=activities[activity_id].activity)
     return intervals, report
 
 
@@ -156,7 +162,7 @@ def full(request):
         'intervals': intervals,
         'records': records,
     }
-    return render(request, 'full.html', context=context)
+    return render(request, 'timesheet.html', context=context)
 
 
 def week(request):
@@ -165,7 +171,7 @@ def week(request):
         'intervals': intervals,
         'records': records,
     }
-    return render(request, 'full.html', context=context)
+    return render(request, 'timesheet.html', context=context)
 
 
 def month(request):
@@ -174,7 +180,7 @@ def month(request):
         'intervals': intervals,
         'records': records,
     }
-    return render(request, 'full.html', context=context)
+    return render(request, 'timesheet.html', context=context)
 
 
 def parse(request):
@@ -211,3 +217,59 @@ def parse(request):
                                 activity=activities[activity])
                 record.save()
     return HttpResponse()
+
+
+class LineChartJSONView(BaseLineChartView):
+    def get_labels(self):
+        records = Record.objects.order_by('date', 'time').values(
+            'date', 'activity_id')
+        ru_holidays = holidays.RU()
+        data = []
+        for record in records:
+            date = record['date']
+            if date in ru_holidays or date.weekday() in (5, 6,):
+                continue
+            if record['activity_id'] in (1, 2, ):
+                if date not in data:
+                    data.append(date)
+        return data
+
+    def get_providers(self):
+        return ["work", "avg work", "inet", "avg inet"]
+
+    def get_data(self):
+        records = Record.objects.order_by('date', 'time').values(
+            'date', 'activity_id')
+        ru_holidays = holidays.RU()
+        data1 = OrderedDict()
+        data2 = OrderedDict()
+        sum1 = sum2 = 0
+        avg_list1 = []
+        avg_list2 = []
+        c1 = c2 = 0
+        for record in records:
+            date = record['date']
+            if date in ru_holidays or date.weekday() in (5, 6,):
+                continue
+            if record['activity_id'] == 2:
+                if date not in data1:
+                    data1[date] = 0
+                data1[date] += 1
+            if record['activity_id'] == 1:
+                if date not in data2:
+                    data2[date] = 0
+                data2[date] += 1
+        for day, value in data1.items():
+            sum1 += value
+            c1 += 1
+            avg_list1.append(sum1 / c1)
+        for day, value in data2.items():
+            sum2 += value
+            c2 += 1
+            avg_list2.append(sum2 / c2)
+        return [list(data1.values()), avg_list1,
+                list(data2.values()), avg_list2]
+
+
+line_chart = TemplateView.as_view(template_name='chart.html')
+line_chart_json = LineChartJSONView.as_view()

@@ -65,6 +65,12 @@
     font-family: sans-serif;
 }
 
+.dayoff {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #f55;
+}
+
 .tracker-cell {
     border-style: none;
 }

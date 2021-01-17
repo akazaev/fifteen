@@ -1,2 +1,4 @@
 django-colorfield
 psycopg2
+holidays
+django-chartjs

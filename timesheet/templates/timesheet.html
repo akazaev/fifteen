@@ -13,15 +13,16 @@
 {% for date, day_records in records.items %}
     <div class="column">
         <div class="date-cell">{{ date }}</div>
-        {% for time, record in day_records.items %}
+        {% for time, record in day_records.0.items %}
             {% if record %}
                 <div
-                     {% if record.color %} class="cell" style="background-color: {{ record.color }}"
-                     {% else %} class="cell rating{{ record.rating }}" {% endif %}>
+                     {% if record.color %} class="cell {% if day_records.1 %} dayoff {% endif %}"
+                     style="background-color: {{ record.color }}"
+                     {% else %} class="cell rating{{ record.rating }} {% if day_records.1 %} dayoff {% endif %}" {% endif %}>
                     <div class="cell-text">{{ record.activity }}</div>
                 </div>
             {% else %}
-                <div class="cell"></div>
+                <div class="cell {% if day_records.1 %} dayoff {% endif %}"></div>
             {% endif %}
         {% endfor %}
     </div>
