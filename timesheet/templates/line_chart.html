@@ -5,10 +5,17 @@
 <canvas id="chart" width="80" height="30"></canvas>
 <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
 <script type="text/javascript">
-    $.get('{% url "line_chart_json" %}', function(data) {
+    $.get('{{ json_url }}', function(data) {
         var ctx = $("#chart").get(0).getContext("2d");
         new Chart(ctx, {
-            type: 'line', data: data
+            type: 'line', data: data,
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {beginAtZero: true}
+                    }]
+                }
+            }
         });
     });
 </script>
