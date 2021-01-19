@@ -225,62 +225,6 @@ def parse(request):
     return HttpResponse()
 
 
-class LineChartJSONView(BaseLineChartView):
-    def get_labels(self):
-        records = Record.objects.order_by('date', 'time').values(
-            'date', 'activity_id')
-        ru_holidays = holidays.RU()
-        ru_holidays.append({"2020-12-31": ""})
-
-        data = []
-        for record in records:
-            date = record['date']
-            if date in ru_holidays or date.weekday() in (5, 6,):
-                continue
-            if record['activity_id'] in (1, 2, ):
-                if date not in data:
-                    data.append(date)
-        return data
-
-    def get_providers(self):
-        return ["work", "avg work", "inet", "avg inet"]
-
-    def get_data(self):
-        records = Record.objects.order_by('date', 'time').values(
-            'date', 'activity_id')
-        ru_holidays = holidays.RU()
-        ru_holidays.append({"2020-12-31": ""})
-
-        data1 = OrderedDict()
-        data2 = OrderedDict()
-        sum1 = sum2 = 0
-        avg_list1 = []
-        avg_list2 = []
-        c1 = c2 = 0
-        for record in records:
-            date = record['date']
-            if date in ru_holidays or date.weekday() in (5, 6,):
-                continue
-            if date not in data1:
-                data1[date] = 0
-            if date not in data2:
-                data2[date] = 0
-            if record['activity_id'] == 2:
-                data1[date] += 1
-            if record['activity_id'] == 1:
-                data2[date] += 1
-        for day, value in data1.items():
-            sum1 += value
-            c1 += 1
-            avg_list1.append(sum1 / c1)
-        for day, value in data2.items():
-            sum2 += value
-            c2 += 1
-            avg_list2.append(sum2 / c2)
-        return [list(data1.values()), avg_list1,
-                list(data2.values()), avg_list2]
-
-
 def avg_chart(request):
     context = {
         'json_url': reverse('avg_chart_json'),
@@ -385,31 +329,45 @@ def weekday_chart_json(request):
 
 
 def week_chart(request):
+    activities = {}
+    for activity in Activity.objects.all():
+        activities[activity.id] = activity.activity
+
     context = {
         'json_url': reverse('week_chart_json'),
+        'activity': request.GET.get('activity', 2),
+        'activities': activities
     }
     return render(request, 'bar_chart.html', context=context)
 
 
 def week_chart_json(request):
-    collect = 2
+    default_opts = {
+        "hidden": False,
+        "backgroundColor": "rgba(171, 9, 0, 0.5)",
+        "borderColor": "rgba(171, 9, 0, 1)",
+        "pointBackgroundColor": "rgba(171, 9, 0, 1)",
+        "pointBorderColor": "#fff",
+    }
+    activity_id = int(request.GET.get('activity', 2))
+    activity = Activity.objects.get(pk=activity_id)
 
     records = Record.objects.order_by('date', 'time').values(
         'date', 'activity_id')
 
-    weeks = []
+    weeks = {}
     week = None
     prev_monday = None
     week_interval = None
     for record in records:
-        if record['activity_id'] != collect:
+        if record['activity_id'] != activity_id:
             continue
         date = record['date']
         weekday = date.weekday()
 
         if not weekday and (not prev_monday or prev_monday != date):
-            if prev_monday:
-                weeks.append(week)
+            if prev_monday and week_interval:
+                weeks[week_interval] = week
             prev_monday = date
             week = [0] * 7
             week_interval = date, date + timedelta(days=6)
@@ -420,11 +378,66 @@ def week_chart_json(request):
         if week_interval[0] <= date <= week_interval[1]:
             week[weekday] += 1
 
-    if week:
-        weeks.append(week)
+    if week and week_interval:
+        weeks[week_interval] = week
 
-    dataset = [sum(week) * INTERVAL / HOUR for week in weeks if all(week[0:5])]
+    dataset = {interval: sum(week) * INTERVAL / HOUR
+               for interval, week in weeks.items() if all(week[0:5])}
 
-    labels = list(range(len(dataset)))
-    return JsonResponse(data={'datasets': [{'data': dataset}],
-                              'labels': labels})
+    labels = [str(interval[0]) + " >> " + str(interval[1])
+              for interval in dataset.keys()]
+    return JsonResponse(data={'datasets': [
+        {'data': list(dataset.values()), 'label': activity.activity,
+         **default_opts}], 'labels': labels})
+
+
+def hour_chart(request):
+    work_day = int(request.GET.get('work', 0))
+    activities = {}
+    for activity in Activity.objects.all():
+        activities[activity.id] = activity.activity
+
+    context = {
+        'json_url': reverse('hour_chart_json'),
+        'activity': request.GET.get('activity', 2),
+        'activities': activities,
+        'work': work_day,
+    }
+    return render(request, 'bar_chart.html', context=context)
+
+
+def hour_chart_json(request):
+    default_opts = {
+        "hidden": False,
+        "backgroundColor": "rgba(171, 9, 0, 0.5)",
+        "borderColor": "rgba(171, 9, 0, 1)",
+        "pointBackgroundColor": "rgba(171, 9, 0, 1)",
+        "pointBorderColor": "#fff",
+    }
+    work_day = int(request.GET.get('work', 0))
+    activity_id = int(request.GET.get('activity', 2))
+    activity = Activity.objects.get(pk=activity_id)
+
+    ru_holidays = holidays.RU()
+    ru_holidays.append({"2020-12-31": ""})
+
+    records = Record.objects.order_by('date', 'time').values(
+        'date', 'time', 'activity_id')
+
+    hours = {f'{h:02}:{m:02}:00': 0 for h in range(0, 24)
+                 for m in (0, INTERVAL, INTERVAL * 2, INTERVAL * 3)}
+    for record in records:
+        if record['activity_id'] != activity_id:
+            continue
+        date = record['date']
+        if work_day and date in ru_holidays or date.weekday() in (5, 6,):
+            continue
+
+        time = record['time']
+        hours[str(time)] += 1
+
+    dataset = list(hours.values())
+    labels = list(hours.keys())
+    return JsonResponse(data={'datasets': [
+        {'data': dataset, 'label': activity.activity, **default_opts}],
+        'labels': labels})

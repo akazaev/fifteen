@@ -2,10 +2,16 @@
 {% load static %}
 
 {% block content %}
+{% if activities %}
+    {% for activity_id, activity_name in activities.items %}
+        <a href="{{ request.path }}?activity={{ activity_id }}">{{ activity_name }}</a>
+        (<a href="{{ request.path }}?activity={{ activity_id }}&work=1">w</a>)
+    {% endfor %}
+{% endif %}
 <canvas id="chart" width="80" height="30"></canvas>
 <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
 <script type="text/javascript">
-    $.get('{{ json_url }}', function(data) {
+    $.get('{{ json_url }}?activity={{ activity }}&work={{ work }}', function(data) {
         var ctx = $("#chart").get(0).getContext("2d");
         new Chart(ctx, {
             type: 'bar', data: data,
