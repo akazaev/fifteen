@@ -37,8 +37,9 @@
     </div>
 {% endfor %}
 </div>
-<!-- Stats block -->
+<!-- Day stats block -->
 <div class="column">
+    Day
     {% for activity in day_stats %}
     <div class="row stats-row">
         <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
@@ -46,8 +47,19 @@
     </div>
     {% endfor %}
 </div>
-<!-- Text block -->
+<!-- Week stats block -->
 <div class="column">
+    Week
+    {% for activity in week_stats %}
+    <div class="row stats-row">
+        <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
+        <div class="cell stats-cell stats-text">{{ activity.2 }}</div>
+    </div>
+    {% endfor %}
+</div>
+<!-- Text block -->
+<div class="column text-block">
+    {% lorem %}
 </div>
 </div>
 <a href="{{ request.path }}">Reset view</a>

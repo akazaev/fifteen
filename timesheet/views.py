@@ -1,10 +1,8 @@
 from collections import defaultdict, namedtuple, OrderedDict
 from datetime import datetime, timedelta
 
-from chartjs.views.lines import BaseLineChartView
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.shortcuts import render
-from django.views.generic import TemplateView
 from django.urls.base import reverse
 import holidays
 
@@ -53,17 +51,31 @@ def index(request):
     activities_choices = [(activity['activity'],
                            activities[activity['activity']])
                           for activity in activity_stat]
+
+    # day stats
     records = Record.objects.filter(date=filter_date)
     day_stats = defaultdict(int)
     day_records = {}
     for record in records:
-        stime = str(record.time)
-        day_records[stime] = record.activity.id
+        day_records[str(record.time)] = record.activity.id
         day_stats[record.activity.activity] += 1
 
     day_stats = [(activity, count, _get_time_display(count * INTERVAL))
                  for activity, count in day_stats.items()]
     day_stats.sort(key=lambda x: x[1], reverse=True)
+    # week stats
+    monday = cur_date - timedelta(days=cur_date.weekday())
+    sunday = monday + timedelta(days=6)
+    records = Record.objects.filter(date__gte=monday, date__lte=sunday)
+    week_stats = defaultdict(int)
+    week_records = {}
+    for record in records:
+        week_records[str(record.time)] = record.activity.id
+        week_stats[record.activity.activity] += 1
+
+    week_stats = [(activity, count, _get_time_display(count * INTERVAL))
+                  for activity, count in week_stats.items()]
+    week_stats.sort(key=lambda x: x[1], reverse=True)
 
     intervals = []
     for h in range(min_hour, max_hour):
@@ -84,7 +96,8 @@ def index(request):
         'prev': prev + 2,
         'cur_date': cur_date.strftime('%Y-%m-%d'),
         'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d'),
-        'day_stats': day_stats
+        'day_stats': day_stats,
+        'week_stats': week_stats,
     }
     return render(request, 'tracker.html', context=context)
 
@@ -234,7 +247,7 @@ def avg_chart(request):
 
 def avg_chart_json(request):
     default_opts = {
-        "hidden": True,
+        "hidden": False,
         "backgroundColor": "rgba(171, 9, 0, 0.5)",
         "borderColor": "rgba(171, 9, 0, 1)",
         "pointBackgroundColor": "rgba(171, 9, 0, 1)",
@@ -272,6 +285,7 @@ def avg_chart_json(request):
             avg.append(sum / c)
         datasets.append({'data': avg, 'label': activity_name,
                          'name': activity_name, **default_opts})
+        default_opts['hidden'] = True
 
     labels = list(range(len(datasets[0]['data'])))
     return JsonResponse(data={'datasets': datasets, 'labels': labels})
@@ -286,7 +300,7 @@ def weekday_chart(request):
 
 def weekday_chart_json(request):
     default_opts = {
-        "hidden": True,
+        "hidden": False,
         "backgroundColor": "rgba(171, 9, 0, 0.5)",
         "borderColor": "rgba(171, 9, 0, 1)",
         "pointBackgroundColor": "rgba(171, 9, 0, 1)",
@@ -323,6 +337,7 @@ def weekday_chart_json(request):
         dataset = [v/c if c else 0 for v, c in zip(values, counts)]
         datasets.append({'data': dataset, 'label': activity_name,
                          'name': activity_name, **default_opts})
+        default_opts['hidden'] = True
 
     labels = list(range(len(datasets[0]['data'])))
     return JsonResponse(data={'datasets': datasets, 'labels': labels})
