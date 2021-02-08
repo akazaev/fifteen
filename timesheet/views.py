@@ -45,12 +45,18 @@ def index(request):
     else:
         cur_date = datetime.strptime(filter_date, '%Y-%m-%d')
 
-    activity_stat = Record.objects.all().values('activity').annotate(
-        count=Count('activity_id')).order_by('-count')
+    month_ago = datetime.now().replace(hour=0, minute=0, second=0)
+    month_ago -= timedelta(days=30)
+    activity_stat = Record.objects.filter(date__gte=month_ago).values(
+        'activity').annotate(count=Count('activity_id')).order_by('-count')
 
     activities_choices = [(activity['activity'],
                            activities[activity['activity']])
                           for activity in activity_stat]
+    for id, activity in activities.items():
+        item = (id, activity)
+        if item not in activities_choices:
+            activities_choices.append(item)
 
     # day stats
     records = Record.objects.filter(date=filter_date)
@@ -66,16 +72,27 @@ def index(request):
     # week stats
     monday = cur_date - timedelta(days=cur_date.weekday())
     sunday = monday + timedelta(days=6)
-    records = Record.objects.filter(date__gte=monday, date__lte=sunday)
+    records = Record.objects.filter(date__gte=monday,
+                                    date__lte=sunday).values('activity')
     week_stats = defaultdict(int)
-    week_records = {}
     for record in records:
-        week_records[str(record.time)] = record.activity.id
-        week_stats[record.activity.activity] += 1
+        week_stats[record['activity']] += 1
+    # month stats
+    month_ago = datetime.now().replace(hour=0, minute=0, second=0)
+    month_ago -= timedelta(days=30)
+    records = Record.objects.filter(date__gte=month_ago).values('activity')
+    month_stats = defaultdict(int)
+    for record in records:
+        month_stats[record['activity']] += 1
 
-    week_stats = [(activity, count, _get_time_display(count * INTERVAL))
-                  for activity, count in week_stats.items()]
+    week_stats = [(activities[activity_id].activity, count,
+                   _get_time_display(count * INTERVAL))
+                  for activity_id, count in week_stats.items()]
     week_stats.sort(key=lambda x: x[1], reverse=True)
+    month_stats = [(activities[activity_id].activity, count,
+                    _get_time_display(count * INTERVAL))
+                  for activity_id, count in month_stats.items()]
+    month_stats.sort(key=lambda x: x[1], reverse=True)
 
     intervals = []
     for h in range(min_hour, max_hour):
@@ -98,6 +115,7 @@ def index(request):
         'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d'),
         'day_stats': day_stats,
         'week_stats': week_stats,
+        'month_stats': month_stats,
     }
     return render(request, 'tracker.html', context=context)
 
@@ -169,9 +187,12 @@ def _report(days=None):
             report[date] = empty_day.copy(), dayoff
 
         activity_id = record['activity_id']
-        report[date][0][time] = Cell(color=activities[activity_id].color,
-                                     rating=activities[activity_id].rating,
-                                     activity=activities[activity_id].activity)
+        color = activities[activity_id].color
+        if color and color.lower() == '#ffffff':
+            color = None
+        report[date][0][time] = Cell(rating=activities[activity_id].rating,
+                                     activity=activities[activity_id].activity,
+                                     color=color)
     return intervals, report
 
 

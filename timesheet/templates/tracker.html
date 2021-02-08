@@ -39,7 +39,7 @@
 </div>
 <!-- Day stats block -->
 <div class="column">
-    Day
+    <div>Day</div>
     {% for activity in day_stats %}
     <div class="row stats-row">
         <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
@@ -49,8 +49,18 @@
 </div>
 <!-- Week stats block -->
 <div class="column">
-    Week
+    <div>Week</div>
     {% for activity in week_stats %}
+    <div class="row stats-row">
+        <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
+        <div class="cell stats-cell stats-text">{{ activity.2 }}</div>
+    </div>
+    {% endfor %}
+</div>
+<!-- Month stats block -->
+<div class="column">
+    <div>Month</div>
+    {% for activity in month_stats %}
     <div class="row stats-row">
         <div class="cell stats-cell stats-text">{{ activity.0 }}</div>
         <div class="cell stats-cell stats-text">{{ activity.2 }}</div>
