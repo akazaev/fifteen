@@ -18,4 +18,6 @@ urlpatterns = [
     path('charts/week.json', views.week_chart_json, name='week_chart_json'),
     path('charts/hour/', views.hour_chart, name='hour_chart'),
     path('charts/hour.json', views.hour_chart_json, name='hour_chart_json'),
+    path('charts/level/', views.level_chart, name='level_chart'),
+    path('charts/level.json', views.level_chart_json, name='level_chart_json'),
 ]

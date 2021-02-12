@@ -477,3 +477,35 @@ def hour_chart_json(request):
     return JsonResponse(data={'datasets': [
         {'data': dataset, 'label': activity.activity, **default_opts}],
         'labels': labels})
+
+
+def level_chart(request):
+    context = {
+        'json_url': reverse('level_chart_json'),
+    }
+    return render(request, 'line_chart.html', context=context)
+
+
+def level_chart_json(request):
+    default_opts = {
+        "hidden": False,
+        "backgroundColor": "rgba(171, 9, 0, 0.5)",
+        "borderColor": "rgba(171, 9, 0, 1)",
+        "pointRadius": 0,
+    }
+
+    ratings = {}
+    for activity in Activity.objects.all():
+        ratings[activity.id] = activity.rating
+
+    records = Record.objects.order_by('date', 'time').values('activity_id')
+
+    level = 0
+    data = []
+    for record in records:
+        level += ratings[record['activity_id']]
+        data.append(level)
+    data = data[-1000:]
+    return JsonResponse(data={'datasets': [{
+        'data': data, 'label': 'The level', **default_opts}],
+        'labels': list(range(len(data)))})
