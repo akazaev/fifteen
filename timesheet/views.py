@@ -59,12 +59,14 @@ def index(request):
             activities_choices.append(item)
 
     # day stats
+    day_rating = 0
     records = Record.objects.filter(date=filter_date)
     day_stats = defaultdict(int)
     day_records = {}
     for record in records:
         day_records[str(record.time)] = record.activity.id
         day_stats[record.activity.activity] += 1
+        day_rating += record.activity.rating
 
     day_stats = [(activity, count, _get_time_display(count * INTERVAL))
                  for activity, count in day_stats.items()]
@@ -113,6 +115,7 @@ def index(request):
         'prev': prev + 2,
         'cur_date': cur_date.strftime('%Y-%m-%d'),
         'prev_date': (cur_date - timedelta(1)).strftime('%Y-%m-%d'),
+        'day_rating': day_rating,
         'day_stats': day_stats,
         'week_stats': week_stats,
         'month_stats': month_stats,
@@ -506,6 +509,49 @@ def level_chart_json(request):
         level += ratings[record['activity_id']]
         data.append(level)
     data = data[-1000:]
+
     return JsonResponse(data={'datasets': [{
         'data': data, 'label': 'The level', **default_opts}],
         'labels': list(range(len(data)))})
+
+
+def day_level_chart(request):
+    context = {
+        'json_url': reverse('day_level_chart_json'),
+    }
+    return render(request, 'bar_chart.html', context=context)
+
+
+def day_level_chart_json(request):
+    default_opts = {
+        "hidden": False,
+        "backgroundColor": "rgba(171, 9, 0, 0.5)",
+        "borderColor": "rgba(171, 9, 0, 1)",
+        "pointRadius": 0,
+    }
+
+    ratings = {}
+    for activity in Activity.objects.all():
+        ratings[activity.id] = activity.rating
+
+    records = Record.objects.order_by('date', 'time').values(
+        'date', 'activity_id')
+
+    day_level = 0
+    data = []
+    dates = []
+    date = None
+    for record in records:
+        if date != record['date']:
+            if date is not None:
+                data.append(day_level)
+                dates.append(date)
+                day_level = 0
+        date = record['date']
+        day_level += ratings[record['activity_id']]
+
+    data.append(day_level)
+    dates.append(date)
+
+    return JsonResponse(data={'datasets': [{
+        'data': data, 'label': 'The level', **default_opts}], 'labels': dates})
