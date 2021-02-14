@@ -67,9 +67,14 @@
     </div>
     {% endfor %}
 </div>
-<!-- Text block -->
+<!-- Tricks block -->
 <div class="column text-block">
-    {% lorem %}
+    <div>Tricks</div>
+    {% for trick_id, trick in tricks.items %}
+    <div class="row">
+        <div class="cell tricks-text">{{ trick_id }} {{ trick.text }}</div>
+    </div>
+    {% endfor %}
 </div>
 </div>
 <a href="{{ request.path }}">Reset view</a>

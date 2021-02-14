@@ -8,7 +8,7 @@ import holidays
 
 from timesheet.forms import CreateForm
 from django.db.models import Count
-from timesheet.models import Activity, Record
+from timesheet.models import Activity, Record, Trick
 
 
 INTERVAL = 15
@@ -37,6 +37,7 @@ def index(request):
         min_hour = max(0, current.hour - prev)
         max_hour = min(24, current.hour + 3)
 
+    tricks = {trick.id: trick for trick in Trick.objects.all()}
     activities = {activity.id: activity for activity in Activity.objects.all()}
 
     if not filter_date:
@@ -119,6 +120,7 @@ def index(request):
         'day_stats': day_stats,
         'week_stats': week_stats,
         'month_stats': month_stats,
+        'tricks': tricks,
     }
     return render(request, 'tracker.html', context=context)
 

@@ -52,7 +52,7 @@
 }
 
 .text-block {
-    max-width: 30%;
+    max-width: 50%;
     font-size: 20px;
 }
 
@@ -82,7 +82,7 @@
 
 .stats-cell {
     border-style: none;
-    min-width: 150px;
+    min-width: 100px;
 }
 
 .stats-row {
@@ -90,7 +90,12 @@
 }
 
 .stats-text {
+    font-size: 18px;
+}
+
+.tricks-text {
     font-size: 24px;
+    text-align: left;
 }
 
 .status {

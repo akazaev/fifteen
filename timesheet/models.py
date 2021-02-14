@@ -1,5 +1,3 @@
-import datetime
-
 from colorfield.fields import ColorField
 
 from django.apps import AppConfig
@@ -26,3 +24,7 @@ class Record(models.Model):
 
     def __str__(self):
         return '{} {} {}'.format(self.activity, self.time, self.date)
+
+
+class Trick(models.Model):
+    text = models.TextField()
