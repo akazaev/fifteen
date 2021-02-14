@@ -191,7 +191,7 @@ def _report(days=None):
 
         activity_id = record['activity_id']
         color = activities[activity_id].color
-        if color and color.lower() == '#ffffff':
+        if color and color == '#FFFFFF':
             color = None
         report[date][0][time] = Cell(rating=activities[activity_id].rating,
                                      activity=activities[activity_id].activity,

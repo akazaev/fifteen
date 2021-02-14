@@ -3,7 +3,7 @@ function updateColors() {
         obj = $(this);
         color = COLORS[obj.val()];
 
-        if (color) {
+        if (color && color != '#FFFFFF') {
             obj.css("background-color", color);
             tr = obj.closest('tr')
             tr.find('.interval_block').css("background-color", color);

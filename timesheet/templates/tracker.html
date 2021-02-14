@@ -27,10 +27,10 @@
         <div class="interval_block">{{ interval.1 }}</div>
         <div class="activity_block">
             <select class="activity" time="{{ interval.0 }}">
-            <option value="">---</option>
-            {% for activity in activities_choices %}
-                <option value="{{ activity.0 }}" {% if interval.2 == activity.0 %} selected {% endif %}>{{ activity.1 }}</option>
-            {% endfor %}
+                <option value="">---</option>
+                {% for activity in activities_choices %}
+                    <option value="{{ activity.0 }}" {% if interval.2 == activity.0 %} selected {% endif %}>{{ activity.1 }}</option>
+                {% endfor %}
             </select>
             <span class="status">&nbsp;&nbsp;&nbsp;</span>
         </div>
