@@ -503,13 +503,22 @@ def level_chart_json(request):
     for activity in Activity.objects.all():
         ratings[activity.id] = activity.rating
 
-    records = Record.objects.order_by('date', 'time').values('activity_id')
+    records = Record.objects.order_by('date', 'time').values('date',
+                                                             'activity_id')
 
     level = 0
     data = []
+    date = None
+    shift = 0
     for record in records:
-        level += ratings[record['activity_id']]
+        if date != record['date']:
+            shift = 100
+        level += ratings[record['activity_id']] + shift
         data.append(level)
+        if shift:
+            level -= shift
+            shift = 0
+        date = record['date']
     data = data[-1000:]
 
     return JsonResponse(data={'datasets': [{

@@ -1,1 +1,4 @@
-How to stop procrastination? Try to develop time-management software to stop procrastinating. But I'm not sure.
+"Just do it!"  
+&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;- *Shia LaBeouf*
