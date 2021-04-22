@@ -527,9 +527,14 @@ def level_chart_json(request):
 
 
 def day_level_chart(request):
+    activities = Activity.objects.all()
     context = {
         'json_url': reverse('day_level_chart_json'),
+        'activities': {activity.id: activity.activity
+                       for activity in activities},
     }
+    if 'activity' in request.GET:
+        context['activity'] = request.GET['activity']
     return render(request, 'bar_chart.html', context=context)
 
 
@@ -540,9 +545,18 @@ def day_level_chart_json(request):
         "borderColor": "rgba(171, 9, 0, 1)",
         "pointRadius": 0,
     }
+    activity_id = request.GET.get('activity')
 
     ratings = {}
-    for activity in Activity.objects.all():
+    activity_name = None
+    print(activity_id)
+    if activity_id:
+        activity = Activity.objects.get(pk=int(activity_id))
+        activities = [activity]
+        activity_name = activity.activity
+    else:
+        activities = Activity.objects.all()
+    for activity in activities:
         ratings[activity.id] = activity.rating
 
     records = Record.objects.order_by('date', 'time').values(
@@ -553,6 +567,8 @@ def day_level_chart_json(request):
     dates = []
     date = None
     for record in records:
+        if record['activity_id'] not in ratings:
+            continue
         if date != record['date']:
             if date is not None:
                 data.append(day_level)
@@ -565,4 +581,5 @@ def day_level_chart_json(request):
     dates.append(date)
 
     return JsonResponse(data={'datasets': [{
-        'data': data, 'label': 'The level', **default_opts}], 'labels': dates})
+        'data': data, 'label': activity_name or 'The level', **default_opts}],
+        'labels': dates})
