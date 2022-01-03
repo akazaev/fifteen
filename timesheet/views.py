@@ -14,6 +14,8 @@ from timesheet.models import Activity, Record, Trick
 INTERVAL = 15
 HOUR = 60
 
+DATE = datetime(2021, 7, 6, 0, 0, 0)
+
 
 def _get_time_display(time):
     hours = time // HOUR
@@ -289,7 +291,7 @@ def avg_chart_json(request):
             activities[activity.id] = activity.activity
 
     records = Record.objects.order_by('date', 'time').values(
-        'date', 'activity_id')
+        'date', 'activity_id').filter(date__gte=DATE)
 
     datasets = []
     for activity_id, activity_name in activities.items():
@@ -342,7 +344,7 @@ def weekday_chart_json(request):
             activities[activity.id] = activity.activity
 
     records = Record.objects.order_by('date', 'time').values(
-        'date', 'activity_id')
+        'date', 'activity_id').filter(date__gte=DATE)
 
     datasets = []
     for activity_id, activity_name in activities.items():
@@ -463,7 +465,7 @@ def hour_chart_json(request):
     ru_holidays.append({"2020-12-31": ""})
 
     records = Record.objects.order_by('date', 'time').values(
-        'date', 'time', 'activity_id')
+        'date', 'time', 'activity_id').filter(date__gte=DATE)
 
     hours = {f'{h:02}:{m:02}:00': 0 for h in range(0, 24)
                  for m in (0, INTERVAL, INTERVAL * 2, INTERVAL * 3)}
@@ -560,7 +562,7 @@ def day_level_chart_json(request):
         ratings[activity.id] = activity.rating
 
     records = Record.objects.order_by('date', 'time').values(
-        'date', 'activity_id')
+        'date', 'activity_id').filter(date__gte=DATE)
 
     day_level = 0
     data = []
@@ -574,6 +576,11 @@ def day_level_chart_json(request):
                 data.append(day_level)
                 dates.append(date)
                 day_level = 0
+                #diff = (record['date'] - date).days
+                #if diff > 1:
+                #    for i in range(diff - 1):
+                #        data.append(0)
+                #        dates.append(date + timedelta(days=i + 1))
         date = record['date']
         day_level += ratings[record['activity_id']]
 
